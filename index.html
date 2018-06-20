@@ -28,6 +28,7 @@
         const TOGGLE_TODO = 'TOGGLE_TODO';
         const ADD_GOAL = 'ADD_GOAL';
         const REMOVE_GOAL = 'REMOVE_GOAL';
+        const RECEIVE_DATA = 'RECEIVE_DATA';
 
         // Action Creators
         function addTodoAction(todo) {
@@ -65,6 +66,14 @@
             }
         }
 
+        function receiveDataAction(todos, goals) {
+            return {
+                type: RECEIVE_DATA,
+                todos,
+                goals,
+            }
+        }
+
         // Reducers
         function todos (state = [], action) {
             switch(action.type) {
@@ -76,6 +85,8 @@
                     return state.map(todo => todo.id !== action.id ? todo :
                         Object.assign({}, todo, {completed: !todo.completed})
                     );
+                case RECEIVE_DATA :
+                    return action.todos;
                 default :
                     return state;
             }
@@ -87,6 +98,17 @@
                     return state.concat([action.goal]);
                 case REMOVE_GOAL :
                     return state.filter(goal => goal.id !== action.id);
+                case RECEIVE_DATA :
+                    return action.goals;
+                default :
+                    return state;
+            }
+        }
+
+        function loading (state = true, action) {
+            switch(action.type) {
+                case RECEIVE_DATA :
+                    return false;
                 default :
                     return state;
             }
@@ -125,6 +147,7 @@
             Redux.combineReducers({
                 todos,
                 goals,
+                loading,
             }),
             Redux.applyMiddleware(
                 checker,
@@ -228,12 +251,23 @@
             componentDidMount() {
                 const {store} = this.props;
 
+                Promise.all([
+                    API.fetchTodos(),
+                    API.fetchGoals()
+                ]).then(([todos, goals]) => {
+                    store.dispatch(receiveDataAction(todos, goals))
+                });
+
                 store.subscribe(() => this.forceUpdate());
             }
 
             render() {
                 const {store} = this.props;
-                const {todos, goals} = store.getState();
+                const {todos, goals, loading} = store.getState();
+
+                if (loading === true) {
+                    return <h3>Loading</h3>
+                }
 
                 return (
                     <div>
