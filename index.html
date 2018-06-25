@@ -75,6 +75,43 @@
             }
         }
 
+        function handleDeleteTodo(todo) {
+            return (dispatch) => {
+                dispatch(removeTodoAction(todo.id));
+
+                return API.deleteTodo(todo.id)
+                    .catch(() => {
+                        dispatch(addTodoAction(todo));
+                        alert('There was an error. Try again.');
+                    });
+            };
+        }
+
+        function handleAddGoal(name, callback) {
+            return (dispatch) => {
+                return API.saveGoal(name)
+                    .then((goal) => {
+                        dispatch(addGoalAction(goal));
+                        callback();
+                    })
+                    .catch(() => {
+                        alert('There was an error. Try again');
+                });
+            };
+        }
+
+        function handleDeleteGoal(goal) {
+            return (dispatch) => {
+                dispatch(removeGoalAction(goal.id));
+
+                return API.deleteGoal(goal.id)
+                    .catch(() => {
+                        dispatch(addGoalAction(goal));
+                        alert('There was an error. Try again.');
+                })
+            }
+        }
+
         // Reducers
         function todos (state = [], action) {
             switch(action.type) {
@@ -151,6 +188,7 @@
                 loading,
             }),
             Redux.applyMiddleware(
+                ReduxThunk.default,
                 checker,
                 logger,
             )
@@ -193,13 +231,7 @@
             }
 
             removeItem = (todo) => {
-                this.props.store.dispatch(removeTodoAction(todo.id));
-
-                return API.deleteTodo(todo.id)
-                    .catch(() => {
-                        this.props.store.dispatch(addTodoAction(todo));
-                        alert('There was an error. Try again.');
-                })
+                this.props.store.dispatch(handleDeleteTodo(todo));
             }
 
             toggleItem = (id) => {
@@ -232,26 +264,15 @@
         class Goals extends React.Component {
             addItem = (event) => {
                 event.preventDefault();
-
-                return API.saveGoal(this.input.value)
-                    .then((goal) => {
-                        this.props.store.dispatch(addGoalAction(goal));
-                        this.input.value = '';
-                    })
-                    .catch(() => {
-                        alert('There was an error. Try again');
-                })
+                this.props.store.dispatch(handleAddGoal(
+                    this.input.value,
+                    () => this.input.value = ''
+                ));
             };
 
             removeItem = (goal) => {
-                this.props.store.dispatch(removeGoalAction(goal.id));
-
-                return API.deleteGoal(goal.id)
-                    .catch(() => {
-                        this.props.store.dispatch(addGoalAction(goal));
-                        alert('There was an error. Try again.');
-                })
-            }
+                this.props.store.dispatch(handleDeleteGoal(goal));
+            };
 
             render() {
                 return (
