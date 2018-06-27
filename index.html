@@ -75,6 +75,17 @@
             }
         }
 
+        function handleInitialData() {
+            return (dispatch) => {
+                return Promise.all([
+                    API.fetchTodos(),
+                    API.fetchGoals()
+                ]).then(([todos, goals]) => {
+                    dispatch(receiveDataAction(todos, goals))
+                });
+            }
+        }
+
         function handleAddTodo(name, callback) {
             return (dispatch) => {
                 return API.saveTodo(name)
@@ -309,12 +320,7 @@
             componentDidMount() {
                 const {store} = this.props;
 
-                Promise.all([
-                    API.fetchTodos(),
-                    API.fetchGoals()
-                ]).then(([todos, goals]) => {
-                    store.dispatch(receiveDataAction(todos, goals))
-                });
+                store.dispatch(handleInitialData());
 
                 store.subscribe(() => this.forceUpdate());
             }
